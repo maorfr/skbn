@@ -140,7 +140,13 @@ func UploadToS3(iClient interface{}, toPath, fromPath string, reader io.Reader) 
 	for attempt < attempts {
 		attempt++
 
-		uploader := s3manager.NewUploader(s)
+		uploader := s3manager.NewUploader(s, func(u *s3manager.Uploader) {
+			customPartSize, err := strconv.ParseInt(os.Getenv("S3_CUSTOM_PART_SIZE"), 10, 64)
+			if err != nil {
+				customPartSize = 64 * 1024 * 1024 // default to 64MB
+			}
+			u.PartSize = customPartSize
+		})
 
 		_, err := uploader.Upload(&s3manager.UploadInput{
 			Bucket: aws.String(bucket),
