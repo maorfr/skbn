@@ -112,7 +112,8 @@ func DownloadFromK8s(iClient interface{}, path string, writer io.Writer) error {
 		return err
 	}
 	namespace, podName, containerName, pathToCopy := initK8sVariables(pSplit)
-	command := []string{"cat", pathToCopy}
+
+	command := []string{"test", "-e", pathToCopy, "&&", "cat", pathToCopy}
 
 	attempts := 3
 	attempt := 0
