@@ -187,7 +187,7 @@ func GetListOfFiles(client interface{}, prefix, path string) ([]string, error) {
 
 	switch prefix {
 	case "k8s":
-		paths, err := GetListOfFilesFromK8s(client, path, "f", "*")
+		paths, err := GetListOfFilesFromK8s(client, path, "", "f", "*")
 		if err != nil {
 			return nil, err
 		}

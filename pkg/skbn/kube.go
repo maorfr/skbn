@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"regexp"
 
 	"github.com/maorfr/skbn/pkg/utils"
 
@@ -59,7 +60,7 @@ func GetClientToK8s() (*K8sClient, error) {
 }
 
 // GetListOfFilesFromK8s gets list of files in path from Kubernetes (recursive)
-func GetListOfFilesFromK8s(iClient interface{}, path, findType, findName string) ([]string, error) {
+func GetListOfFilesFromK8s(iClient interface{}, path, filter, findType, findName, string) ([]string, error) {
 	client := *iClient.(*K8sClient)
 	pSplit := strings.Split(path, "/")
 	if err := validateK8sPath(pSplit); err != nil {
@@ -67,6 +68,8 @@ func GetListOfFilesFromK8s(iClient interface{}, path, findType, findName string)
 	}
 	namespace, podName, containerName, findPath := initK8sVariables(pSplit)
 	command := []string{"find", findPath, "-type", findType, "-name", findName}
+
+	r, _ := regexp.Compile(filter)
 
 	attempts := 3
 	attempt := 0
@@ -94,6 +97,9 @@ func GetListOfFilesFromK8s(iClient interface{}, path, findType, findName string)
 		var outLines []string
 		for _, line := range lines {
 			if line != "" {
+				if filter != "" && r.MatchString(line) {
+					continue
+				}
 				outLines = append(outLines, strings.Replace(line, findPath, "", 1))
 			}
 		}
