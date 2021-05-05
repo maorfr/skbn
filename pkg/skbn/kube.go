@@ -284,3 +284,36 @@ func initK8sVariables(split []string) (string, string, string, string) {
 func getAbsPath(path ...string) string {
 	return filepath.Join("/", filepath.Join(path...))
 }
+
+// DeleteFromK8s deletes a single file from Kubernetes
+func DeleteFromK8s(iClient interface{}, path string) error {
+	client := *iClient.(*K8sClient)
+	pSplit := strings.Split(path, "/")
+	if err := validateK8sPath(pSplit); err != nil {
+		return err
+	}
+	namespace, podName, containerName, pathToDelete := initK8sVariables(pSplit)
+	command := []string{"rm", pathToDelete}
+
+	attempts := 3
+	attempt := 0
+	for attempt < attempts {
+		attempt++
+
+		stderr, err := Exec(client, namespace, podName, containerName, command, nil, nil)
+		if attempt == attempts {
+			if len(stderr) != 0 {
+				return fmt.Errorf("STDERR: " + (string)(stderr))
+			}
+			if err != nil {
+				return err
+			}
+		}
+		if err == nil {
+			return nil
+		}
+		utils.Sleep(attempt)
+	}
+
+	return nil
+}
